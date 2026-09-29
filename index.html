@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Vocal Isolator Pro - Gold & Emerald Edition</title>
+  <style>
+    :root {
+      --bg-dark: #06140e;
+      --bg-card: rgba(12, 38, 27, 0.75);
+      --gold-primary: #ffd700;
+      --gold-secondary: #dfac20;
+      --gold-gradient: linear-gradient(135deg, #fff2a3 0%, #ffd700 50%, #b8860b 100%);
+      --emerald-accent: #0f3826;
+      --text-light: #f0f7f4;
+      --text-muted: #a3c1ad;
+      --border-gold: rgba(255, 215, 0, 0.3);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg-dark);
+      background-image: 
+        radial-gradient(circle at 50% 0%, rgba(255, 215, 0, 0.15) 0%, transparent 70%),
+        radial-gradient(circle at 80% 80%, rgba(15, 56, 38, 0.5) 0%, transparent 50%);
+      color: var(--text-light);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px 15px;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 800px;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 25px;
+      padding: 20px 10px;
+    }
+
+    .app-title {
+      font-size: 2.2rem;
+      font-weight: 800;
+      background: var(--gold-gradient);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      text-transform: uppercase;
+      letter-spacing: 1.5px;
+      text-shadow: 0px 4px 15px rgba(255, 215, 0, 0.2);
+    }
+
+    .developer-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: rgba(6, 20, 14, 0.8);
+      border: 1px solid var(--border-gold);
+      padding: 6px 16px;
+      border-radius: 20px;
+      margin-top: 10px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+    }
+
+    .live-dot {
+      width: 10px;
+      height: 10px;
+      background-color: var(--gold-primary);
+      border-radius: 50%;
+      box-shadow: 0 0 8px var(--gold-primary);
+      animation: pulseGold 1.2s infinite alternate;
+    }
+
+    @keyframes pulseGold {
+      0% {
+        opacity: 0.3;
+        transform: scale(0.8);
+        box-shadow: 0 0 2px var(--gold-primary);
+      }
+      100% {
+        opacity: 1;
+        transform: scale(1.2);
+        box-shadow: 0 0 12px var(--gold-primary);
+      }
+    }
+
+    .dev-text {
+      font-size: 0.85rem;
+      color: var(--gold-secondary);
+      font-weight: 600;
+      letter-spacing: 0.5px;
+    }
+
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-gold);
+      backdrop-filter: blur(10px);
+      border-radius: 16px;
+      padding: 25px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .upload-area {
+      border: 2px dashed var(--gold-secondary);
+      border-radius: 12px;
+      padding: 30px 15px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      background: rgba(15, 56, 38, 0.3);
+    }
+
+    .upload-area:hover {
+      background: rgba(255, 215, 0, 0.05);
+      border-color: var(--gold-primary);
+    }
+
+    .upload-icon {
+      font-size: 2.5rem;
+      margin-bottom: 10px;
+      display: block;
+    }
+
+    .file-input {
+      display: none;
+    }
+
+    .btn {
+      background: var(--gold-gradient);
+      color: #000;
+      font-weight: 700;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 25px;
+      cursor: pointer;
+      font-size: 0.95rem;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+      display: inline-block;
+      margin-top: 15px;
+    }
+
+    .btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(255, 215, 0, 0.5);
+    }
+
+    .controls {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      margin-top: 20px;
+    }
+
+    .mode-selector {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+
+    .mode-btn {
+      background: rgba(6, 20, 14, 0.6);
+      border: 1px solid var(--border-gold);
+      color: var(--text-light);
+      padding: 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .mode-btn.active {
+      background: var(--gold-gradient);
+      color: #000;
+      border-color: var(--gold-primary);
+    }
+
+    audio {
+      width: 100%;
+      margin-top: 15px;
+      border-radius: 8px;
+      outline: none;
+    }
+
+    .status-msg {
+      margin-top: 10px;
+      font-size: 0.9rem;
+      color: var(--gold-secondary);
+      text-align: center;
+      min-height: 20px;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: auto;
+      padding: 15px 0;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+    <header>
+      <h1 class="app-title">Vocal Isolator Gold</h1>
+      <div class="developer-badge">
+        <span class="live-dot"></span>
+        <span class="dev-text">developer : fatur62</span>
+      </div>
+    </header>
+
+    <div class="card">
+      <div class="upload-area" id="dropArea">
+        <span class="upload-icon">✨</span>
+        <p style="font-weight: 600; color: var(--gold-primary);">Pilih atau Tarik File Audio ke Sini</p>
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 5px;">Mendukung format MP3, WAV, OGG, M4A</p>
+        <button class="btn" onclick="document.getElementById('audioInput').click()">Cari File</button>
+        <input type="file" id="audioInput" class="file-input" accept="audio/*">
+      </div>
+      <div id="statusMsg" class="status-msg"></div>
+    </div>
+
+    <div class="card" id="playerCard" style="display: none;">
+      <h3 style="color: var(--gold-primary); margin-bottom: 15px; font-size: 1.1rem;">Panel Mode Suara</h3>
+      <div class="mode-selector">
+        <button class="mode-btn active" id="btnInstrument" onclick="setAudioMode('instrument')">🎸 Mode Musik (No Vocal)</button>
+        <button class="mode-btn" id="btnVocal" onclick="setAudioMode('vocal')">🎤 Mode Vokal (Isolated)</button>
+      </div>
+      <audio id="audioPlayer" controls></audio>
+    </div>
+  </div>
+
+  <footer>
+    &copy; 2026 Vocal Isolator Pro. Powered by Web Audio API.
+  </footer>
+
+  <script>
+    let audioCtx = null;
+    let sourceNode = null;
+    let audioBuffer = null;
+    let currentMode = 'instrument';
+
+    const audioInput = document.getElementById('audioInput');
+    const dropArea = document.getElementById('dropArea');
+    const statusMsg = document.getElementById('statusMsg');
+    const playerCard = document.getElementById('playerCard');
+    const audioPlayer = document.getElementById('audioPlayer');
+
+    dropArea.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      dropArea.style.borderColor = 'var(--gold-primary)';
+    });
+
+    dropArea.addEventListener('dragleave', () => {
+      dropArea.style.borderColor = 'var(--gold-secondary)';
+    });
+
+    dropArea.addEventListener('drop', (e) => {
+      e.preventDefault();
+      dropArea.style.borderColor = 'var(--gold-secondary)';
+      if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+        handleFile(e.dataTransfer.files[0]);
+      }
+    });
+
+    audioInput.addEventListener('change', (e) => {
+      if (e.target.files && e.target.files[0]) {
+        handleFile(e.target.files[0]);
+      }
+    });
+
+    function handleFile(file) {
+      if (!file || !file.type.startsWith('audio/')) {
+        statusMsg.innerText = 'Harap pilih file audio yang valid!';
+        return;
+      }
+
+      statusMsg.innerText = 'Memuat audio: ' + file.name + '...';
+      const fileUrl = URL.createObjectURL(file);
+      audioPlayer.src = fileUrl;
+      playerCard.style.display = 'block';
+
+      const fileReader = new FileReader();
+      fileReader.onload = async function(evt) {
+        try {
+          if (!audioCtx) {
+            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          }
+          const arrayBuffer = evt.target.result;
+          audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+          statusMsg.innerText = 'Audio berhasil dimuat. Silakan putar lagu!';
+          processAudio();
+        } catch (err) {
+          console.error(err);
+          statusMsg.innerText = 'Gagal memproses file audio.';
+        }
+      };
+      fileReader.readAsArrayBuffer(file);
+    }
+
+    function setAudioMode(mode) {
+      currentMode = mode;
+      document.getElementById('btnInstrument').classList.toggle('active', mode === 'instrument');
+      document.getElementById('btnVocal').classList.toggle('active', mode === 'vocal');
+      if (audioBuffer) {
+        processAudio();
+      }
+    }
+
+    function processAudio() {
+      if (!audioBuffer || !audioCtx) return;
+
+      const numChannels = audioBuffer.numberOfChannels;
+      if (numChannels < 2) {
+        statusMsg.innerText = 'Peringatan: File audio bernilai Mono. Efek isolasi vokal optimal pada file Stereo.';
+        return;
+      }
+
+      const length = audioBuffer.length;
+      const sampleRate = audioBuffer.sampleRate;
+      const left = audioBuffer.getChannelData(0);
+      const right = audioBuffer.getChannelData(1);
+
+      const processedBuffer = audioCtx.createBuffer(2, length, sampleRate);
+      const outLeft = processedBuffer.getChannelData(0);
+      const outRight = processedBuffer.getChannelData(1);
+
+      for (let i = 0; i < length; i++) {
+        if (currentMode === 'instrument') {
+          // Menghapus elemen suara tengah (vokal)
+          const diff = left[i] - right[i];
+          outLeft[i] = diff;
+          outRight[i] = diff;
+        } else {
+          // Mengisolasi elemen suara tengah (vokal)
+          const center = (left[i] + right[i]) / 2;
+          outLeft[i] = center;
+          outRight[i] = center;
+        }
+      }
+
+      // Konversi buffer yang diproses menjadi Blob URL agar dapat diputar player HTML5
+      const wavBlob = bufferToWave(processedBuffer, length);
+      const processedUrl = URL.createObjectURL(wavBlob);
+      const currentTime = audioPlayer.currentTime;
+      const isPlaying = !audioPlayer.paused;
+
+      audioPlayer.src = processedUrl;
+      audioPlayer.currentTime = currentTime;
+      if (isPlaying) audioPlayer.play();
+    }
+
+    function bufferToWave(abuffer, len) {
+      const numOfChan = abuffer.numberOfChannels;
+      const length = len * numOfChan * 2 + 44;
+      const out = new DataView(new ArrayBuffer(length));
+      let channels = [], i, sample, offset = 0, pos = 0;
+
+      function setUint16(data) { out.setUint16(pos, data, true); pos += 2; }
+      function setUint32(data) { out.setUint32(pos, data, true); pos += 4; }
+
+      setUint32(0x46464952); // "RIFF"
+      setUint32(length - 8);
+      setUint32(0x45564157); // "WAVE"
+      setUint32(0x20746d66); // "fmt "
+      setUint32(16);
+      setUint16(1);
+      setUint16(numOfChan);
+      setUint32(abuffer.sampleRate);
+      setUint32(abuffer.sampleRate * 2 * numOfChan);
+      setUint16(numOfChan * 2);
+      setUint16(16);
+      setUint32(0x61746164); // "data"
+      setUint32(length - pos - 4);
+
+      for (i = 0; i < abuffer.numberOfChannels; i++) channels.push(abuffer.getChannelData(i));
+
+      while (offset < len) {
+        for (i = 0; i < numOfChan; i++) {
+          sample = Math.max(-1, Math.min(1, channels[i][offset]));
+          sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767) | 0;
+          out.setInt16(pos, sample, true);
+          pos += 2;
+        }
+        offset++;
+      }
+      return new Blob([out], { type: "audio/wav" });
+    }
+  </script>
+</body>
+</html>
