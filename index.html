@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Vocal Isolator Gold - HD AI Engine</title>
+  <title>Vocal Isolator Gold - Live Audio Engine</title>
   <style>
     :root {
       --bg-dark: #06140e;
@@ -80,14 +80,8 @@
     }
 
     @keyframes pulseGold {
-      0% {
-        opacity: 0.3;
-        transform: scale(0.8);
-      }
-      100% {
-        opacity: 1;
-        transform: scale(1.2);
-      }
+      0% { opacity: 0.3; transform: scale(0.8); }
+      100% { opacity: 1; transform: scale(1.2); }
     }
 
     .dev-text {
@@ -115,9 +109,7 @@
       background: rgba(15, 56, 38, 0.3);
     }
 
-    .file-input {
-      display: none;
-    }
+    .file-input { display: none; }
 
     .btn {
       background: var(--gold-gradient);
@@ -156,7 +148,7 @@
 
     audio {
       width: 100%;
-      margin-top: 10px;
+      margin-top: 15px;
     }
 
     .status-msg {
@@ -164,23 +156,6 @@
       font-size: 0.9rem;
       color: var(--gold-secondary);
       text-align: center;
-    }
-
-    .slider-group {
-      margin-top: 15px;
-    }
-
-    .slider-group label {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.85rem;
-      color: var(--gold-secondary);
-      margin-bottom: 5px;
-    }
-
-    input[type=range] {
-      width: 100%;
-      accent-color: var(--gold-primary);
     }
   </style>
 </head>
@@ -198,7 +173,7 @@
     <div class="card">
       <div class="upload-area" id="dropArea">
         <span style="font-size: 2.5rem; display:block; margin-bottom:10px;">🎧</span>
-        <p style="font-weight: 600; color: var(--gold-primary);">Pilih atau Tarik File Audio (HQ MP3/WAV)</p>
+        <p style="font-weight: 600; color: var(--gold-primary);">Pilih File Audio (MP3 / WAV)</p>
         <button class="btn" onclick="document.getElementById('audioInput').click()">Pilih Audio</button>
         <input type="file" id="audioInput" class="file-input" accept="audio/*">
       </div>
@@ -206,166 +181,119 @@
     </div>
 
     <div class="card" id="playerCard" style="display: none;">
-      <h3 style="color: var(--gold-primary); margin-bottom: 15px;">Panel Isolasi Suara Advanced</h3>
+      <h3 style="color: var(--gold-primary); margin-bottom: 15px;">Mode Suara Real-time</h3>
       
       <div class="mode-selector">
-        <button class="mode-btn active" id="btnInstrument" onclick="setMode('instrument')">🎸 Instrumen (Hapus Vokal)</button>
-        <button class="mode-btn" id="btnVocal" onclick="setMode('vocal')">🎤 Vokal Saja (Isolasi)</button>
+        <button class="mode-btn active" id="btnInstrument" onclick="setMode('instrument')">🎸 Mode Musik (Karaoke)</button>
+        <button class="mode-btn" id="btnVocal" onclick="setMode('vocal')">🎤 Mode Vokal (Isolasi)</button>
       </div>
 
-      <div class="slider-group">
-        <label>
-          <span>Tingkat Kerapian Filter (Cutoff)</span>
-          <span id="cutoffVal">2200 Hz</span>
-        </label>
-        <input type="range" id="cutoffSlider" min="1000" max="5000" step="100" value="2200" oninput="updateFilter()">
-      </div>
-
-      <audio id="audioPlayer" controls></audio>
+      <audio id="audioPlayer" controls crossorigin="anonymous"></audio>
     </div>
   </div>
 
   <script>
     let audioCtx = null;
-    let audioBuffer = null;
-    let currentMode = 'instrument';
+    let sourceNode = null;
+    let splitterNode = null;
+    let inverterNode = null;
+    let filterNode = null;
+    let mergerNode = null;
+    let isNodeConnected = false;
 
     const audioInput = document.getElementById('audioInput');
     const statusMsg = document.getElementById('statusMsg');
     const playerCard = document.getElementById('playerCard');
     const audioPlayer = document.getElementById('audioPlayer');
-    const cutoffSlider = document.getElementById('cutoffSlider');
-    const cutoffVal = document.getElementById('cutoffVal');
 
     audioInput.addEventListener('change', (e) => {
       if (e.target.files && e.target.files[0]) {
-        processFile(e.target.files[0]);
+        loadFile(e.target.files[0]);
       }
     });
 
-    function processFile(file) {
-      statusMsg.innerText = 'Menganalisis frekuensi audio...';
-      const fileReader = new FileReader();
+    function loadFile(file) {
+      statusMsg.innerText = 'Memuat audio: ' + file.name;
+      const fileUrl = URL.createObjectURL(file);
+      audioPlayer.src = fileUrl;
+      playerCard.style.display = 'block';
 
-      fileReader.onload = async function(evt) {
-        try {
-          if (!audioCtx) {
-            audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-          }
-          audioBuffer = await audioCtx.decodeAudioData(evt.result);
-          playerCard.style.display = 'block';
-          statusMsg.innerText = 'Audio berhasil diproses!';
-          renderAudio();
-        } catch (err) {
-          statusMsg.innerText = 'Gagal memproses file audio.';
-        }
+      audioPlayer.oncanplay = () => {
+        statusMsg.innerText = 'Audio siap diputar!';
       };
-      fileReader.readAsArrayBuffer(file);
+
+      audioPlayer.onerror = () => {
+        statusMsg.innerText = 'Gagal memutar audio. Coba file MP3 lain.';
+      };
+    }
+
+    function initAudioGraph() {
+      if (isNodeConnected) return;
+
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      sourceNode = audioCtx.createMediaElementSource(audioPlayer);
+
+      // Node untuk manipulasi stereo
+      splitterNode = audioCtx.createChannelSplitter(2);
+      inverterNode = audioCtx.createGain();
+      filterNode = audioCtx.createBiquadFilter();
+      mergerNode = audioCtx.createChannelMerger(2);
+
+      // Konfigurasi Filter Vokal (Bandpass 300Hz - 3000Hz)
+      filterNode.type = 'bandpass';
+      filterNode.frequency.value = 1000;
+      filterNode.Q.value = 1.0;
+
+      // Inversi Fase Sinyal Kanan
+      inverterNode.gain.value = -1;
+
+      applyRouting('instrument');
+      isNodeConnected = true;
     }
 
     function setMode(mode) {
-      currentMode = mode;
       document.getElementById('btnInstrument').classList.toggle('active', mode === 'instrument');
       document.getElementById('btnVocal').classList.toggle('active', mode === 'vocal');
-      renderAudio();
-    }
 
-    function updateFilter() {
-      cutoffVal.innerText = cutoffSlider.value + ' Hz';
-      renderAudio();
-    }
-
-    function renderAudio() {
-      if (!audioBuffer || !audioCtx) return;
-
-      const numChannels = audioBuffer.numberOfChannels;
-      if (numChannels < 2) {
-        statusMsg.innerText = 'Peringatan: File audio bernilai Mono. Hasil pemisahan vokal butuh file Stereo.';
-        return;
+      if (!isNodeConnected) {
+        initAudioGraph();
+      } else {
+        applyRouting(mode);
       }
-
-      const length = audioBuffer.length;
-      const sampleRate = audioBuffer.sampleRate;
-      const left = audioBuffer.getChannelData(0);
-      const right = audioBuffer.getChannelData(1);
-
-      const outBuffer = audioCtx.createBuffer(2, length, sampleRate);
-      const outL = outBuffer.getChannelData(0);
-      const outR = outBuffer.getChannelData(1);
-
-      const cutoffFreq = parseFloat(cutoffSlider.value);
-      // Alpha filter sederhana untuk smoothing frekuensi vokal
-      const dt = 1 / sampleRate;
-      const rc = 1 / (2 * Math.PI * cutoffFreq);
-      const alpha = dt / (rc + dt);
-
-      let prevL = 0, prevR = 0;
-
-      for (let i = 0; i < length; i++) {
-        const l = left[i];
-        const r = right[i];
-
-        // Ekstraksi sinyal tengah (Center Channel - Vokal Utama) dan samping (Side Channel - Instrumen Stereo)
-        const center = (l + r) * 0.5;
-        const side = (l - r) * 0.5;
-
-        // Dynamic High/Low Pass smoothing
-        prevL = prevL + alpha * (center - prevL);
-
-        if (currentMode === 'instrument') {
-          // Menghapus vokal tengah & mempertahankan bass + instrumen stereo
-          const cleanInstL = side + (l - prevL) * 0.5;
-          const cleanInstR = -side + (r - prevL) * 0.5;
-
-          // Soft Limiter agar suara tidak pecah
-          outL[i] = Math.max(-1, Math.min(1, cleanInstL * 1.2));
-          outR[i] = Math.max(-1, Math.min(1, cleanInstR * 1.2));
-        } else {
-          // Mengisolasi vokal frekuensi menengah (300Hz - Cutoff)
-          const isolatedVocal = prevL * 1.4;
-          
-          outL[i] = Math.max(-1, Math.min(1, isolatedVocal));
-          outR[i] = Math.max(-1, Math.min(1, isolatedVocal));
-        }
-      }
-
-      const wavBlob = bufferToWave(outBuffer, length);
-      const curTime = audioPlayer.currentTime;
-      const isPlaying = !audioPlayer.paused;
-
-      audioPlayer.src = URL.createObjectURL(wavBlob);
-      audioPlayer.currentTime = curTime;
-      if (isPlaying) audioPlayer.play();
     }
 
-    function bufferToWave(abuffer, len) {
-      const numOfChan = abuffer.numberOfChannels;
-      const length = len * numOfChan * 2 + 44;
-      const out = new DataView(new ArrayBuffer(length));
-      let channels = [], i, sample, offset = 0, pos = 0;
+    function applyRouting(mode) {
+      if (!audioCtx) return;
 
-      function setUint16(data) { out.setUint16(pos, data, true); pos += 2; }
-      function setUint32(data) { out.setUint32(pos, data, true); pos += 4; }
+      // Disconnect semua rute terdahulu
+      sourceNode.disconnect();
+      splitterNode.disconnect();
+      inverterNode.disconnect();
+      filterNode.disconnect();
+      mergerNode.disconnect();
 
-      setUint32(0x46464952); setUint32(length - 8); setUint32(0x45564157);
-      setUint32(0x20746d66); setUint32(16); setUint16(1); setUint16(numOfChan);
-      setUint32(abuffer.sampleRate); setUint32(abuffer.sampleRate * 2 * numOfChan);
-      setUint16(numOfChan * 2); setUint16(16); setUint32(0x61746164);
-      setUint32(length - pos - 4);
-
-      for (i = 0; i < abuffer.numberOfChannels; i++) channels.push(abuffer.getChannelData(i));
-
-      while (offset < len) {
-        for (i = 0; i < numOfChan; i++) {
-          sample = Math.max(-1, Math.min(1, channels[i][offset]));
-          sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767) | 0;
-          out.setInt16(pos, sample, true);
-          pos += 2;
-        }
-        offset++;
+      if (mode === 'instrument') {
+        // Hapus Vokal Tengah (Phase Inversion Real-time)
+        sourceNode.connect(splitterNode);
+        splitterNode.connect(mergerNode, 0, 0); // Kiri langsung
+        splitterNode.connect(inverterNode, 1);  // Kanan dibalik fasenya
+        inverterNode.connect(mergerNode, 0, 1);  // Gabung ke Output
+        mergerNode.connect(audioCtx.destination);
+      } else {
+        // Mode Isolasi Vokal (Bandpass Filter Sinyal Tengah)
+        sourceNode.connect(filterNode);
+        filterNode.connect(audioCtx.destination);
       }
-      return new Blob([out], { type: "audio/wav" });
     }
+
+    audioPlayer.addEventListener('play', () => {
+      if (!isNodeConnected) {
+        initAudioGraph();
+      }
+      if (audioCtx && audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+    });
   </script>
 </body>
 </html>
